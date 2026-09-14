@@ -27,6 +27,7 @@ let feedbackTimer: ReturnType<typeof setTimeout> | undefined;
 const view = new CanvasView(canvasEl, copyBadge, copyHint, {
   onSplit: (orientation, splitPx) => handleSplit(orientation, splitPx),
   onLineMove: (orientation, splitPx) => handleLineMove(orientation, splitPx),
+  onClearSplit: () => handleClearSplit(),
   onPartClick: (partIndex) => void handlePartClick(partIndex),
 });
 
@@ -62,6 +63,14 @@ function handleLineMove(orientation: SplitOrientation, splitPx: number): void {
 
   const { first, second } = splitImage(state.image, orientation, splitPx);
   state = { phase: "split", image: state.image, orientation, first, second };
+}
+
+function handleClearSplit(): void {
+  if (state.phase !== "split") return;
+
+  state = { phase: "loaded", image: state.image };
+  view.backToLoaded();
+  setStatus("Move & swipe to choose a split direction, then click — drop, paste or select a new image to replace");
 }
 
 async function handlePartClick(partIndex: 0 | 1): Promise<void> {

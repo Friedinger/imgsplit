@@ -3,11 +3,13 @@ import type { SplitOrientation } from "./types";
 export interface CanvasViewOptions {
   onSplit: (orientation: SplitOrientation, splitPx: number) => void;
   onLineMove: (orientation: SplitOrientation, splitPx: number) => void;
+  onClearSplit: () => void;
   onPartClick: (partIndex: 0 | 1) => void;
 }
 
 const GRAB_ZONE = 8;
 const ORIENT_THRESHOLD = 30;
+const DRAG_CLICK_THRESHOLD = 4;
 
 type PartIndex = 0 | 1;
 
@@ -25,6 +27,8 @@ export class CanvasView {
   private linePos: number | null = null;
   private dragging = false;
   private pressedOnLine = false;
+  private dragMoved = false;
+  private pressPos = 0;
   private feedbackPart: PartIndex | null = null;
   private prevMove: { x: number; y: number } | null = null;
   private moveAx = 0;
@@ -32,6 +36,7 @@ export class CanvasView {
   private previewOrientation: SplitOrientation | null = null;
   private readonly onSplit: (orientation: SplitOrientation, splitPx: number) => void;
   private readonly onLineMove: (orientation: SplitOrientation, splitPx: number) => void;
+  private readonly onClearSplit: () => void;
   private readonly onPartClick: (partIndex: PartIndex) => void;
 
   private readonly handlePointerMove = (event: PointerEvent) => this.drawHover(event);
@@ -50,6 +55,7 @@ export class CanvasView {
     this.hintChip = hint.querySelector(".copy-hint__chip") as HTMLElement;
     this.onSplit = options.onSplit;
     this.onLineMove = options.onLineMove;
+    this.onClearSplit = options.onClearSplit;
     this.onPartClick = options.onPartClick;
   }
 
@@ -59,6 +65,7 @@ export class CanvasView {
     this.linePos = null;
     this.dragging = false;
     this.pressedOnLine = false;
+    this.dragMoved = false;
     this.resetOrientationTracking();
 
     const aspectRatio = image.width / image.height;
@@ -88,6 +95,7 @@ export class CanvasView {
     this.linePos = splitPx / this.scale;
     this.dragging = false;
     this.pressedOnLine = false;
+    this.dragMoved = false;
     this.resetOrientationTracking();
     this.redrawImage();
     this.drawLine(this.linePos, false);
@@ -178,6 +186,7 @@ export class CanvasView {
     this.linePos = null;
     this.dragging = false;
     this.pressedOnLine = false;
+    this.dragMoved = false;
     this.feedbackPart = null;
     this.resetOrientationTracking();
     this.canvas.style.cursor = "";
@@ -261,9 +270,12 @@ export class CanvasView {
 
     if (this.dragging) {
       this.hidePartHint();
-      this.redrawImage();
-      this.drawLine(pos, true);
       this.canvas.style.cursor = isVertical ? "ew-resize" : "ns-resize";
+      if (Math.abs(pos - this.pressPos) > DRAG_CLICK_THRESHOLD) {
+        this.dragMoved = true;
+        this.redrawImage();
+        this.drawLine(pos, true);
+      }
       return;
     }
 
@@ -286,6 +298,8 @@ export class CanvasView {
     if (Math.abs(pos - this.linePos) <= GRAB_ZONE) {
       this.pressedOnLine = true;
       this.dragging = true;
+      this.dragMoved = false;
+      this.pressPos = pos;
       this.canvas.setPointerCapture(event.pointerId);
     }
   }
@@ -296,6 +310,7 @@ export class CanvasView {
     if (this.canvas.hasPointerCapture(event.pointerId)) {
       this.canvas.releasePointerCapture(event.pointerId);
     }
+    if (!this.dragMoved) return;
     const splitPx = this.toSplitPx(this.orientationPos(event));
     this.linePos = splitPx / this.scale;
     this.onLineMove(this.orientation as SplitOrientation, splitPx);
@@ -318,10 +333,28 @@ export class CanvasView {
 
     if (this.pressedOnLine) {
       this.pressedOnLine = false;
+      if (!this.dragMoved) {
+        this.onClearSplit();
+        this.backToLoaded();
+      }
+      this.dragMoved = false;
       return;
     }
 
     this.onPartClick(this.orientationPos(event) < this.linePos ? 0 : 1);
+  }
+
+  backToLoaded(): void {
+    this.orientation = null;
+    this.linePos = null;
+    this.dragging = false;
+    this.pressedOnLine = false;
+    this.dragMoved = false;
+    this.resetOrientationTracking();
+    this.redrawImage();
+    this.canvas.style.cursor = "";
+    this.hideFeedback();
+    this.hidePartHint();
   }
 
   private resolveColor(cssVariable: string): string {
