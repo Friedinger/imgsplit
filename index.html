@@ -20,11 +20,14 @@
 
       <main id="dropZone" class="drop-zone">
         <div id="emptyState" class="empty-state">
-          <p>Drop an image here or paste it (Ctrl+V)</p>
           <label class="file-button">
-            Choose file
+            Choose image
             <input type="file" id="fileInput" accept="image/*" hidden />
           </label>
+          <p class="empty-state__hint">
+            or drop an image anywhere or paste it with
+            <kbd>Ctrl</kbd>+<kbd>V</kbd>
+          </p>
         </div>
 
         <canvas id="canvas" class="canvas" hidden></canvas>
