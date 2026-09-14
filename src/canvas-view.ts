@@ -15,7 +15,7 @@ export class CanvasView {
   constructor(canvas: HTMLCanvasElement, options: CanvasViewOptions) {
     this.canvas = canvas;
     const ctx = canvas.getContext("2d");
-    if (!ctx) throw new Error("2D-Kontext konnte nicht erstellt werden.");
+    if (!ctx) throw new Error("Could not create 2D context.");
     this.ctx = ctx;
     this.onSplit = options.onSplit;
   }
