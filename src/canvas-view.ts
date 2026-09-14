@@ -1,10 +1,15 @@
+import type { SplitOrientation } from "./types";
+
 export interface CanvasViewOptions {
-  onSplit: (splitY: number) => void;
-  onLineMove: (splitY: number) => void;
-  onPartClick: (isTop: boolean) => void;
+  onSplit: (orientation: SplitOrientation, splitPx: number) => void;
+  onLineMove: (orientation: SplitOrientation, splitPx: number) => void;
+  onPartClick: (partIndex: 0 | 1) => void;
 }
 
 const GRAB_ZONE = 8;
+const ORIENT_THRESHOLD = 30;
+
+type PartIndex = 0 | 1;
 
 export class CanvasView {
   private readonly canvas: HTMLCanvasElement;
@@ -16,13 +21,18 @@ export class CanvasView {
   private image: ImageBitmap | null = null;
   private dpr = 1;
   private scale = 1;
-  private splitY: number | null = null;
+  private orientation: SplitOrientation | null = null;
+  private linePos: number | null = null;
   private dragging = false;
   private pressedOnLine = false;
-  private feedbackPart: boolean | null = null;
-  private readonly onSplit: (splitY: number) => void;
-  private readonly onLineMove: (splitY: number) => void;
-  private readonly onPartClick: (isTop: boolean) => void;
+  private feedbackPart: PartIndex | null = null;
+  private prevMove: { x: number; y: number } | null = null;
+  private moveAx = 0;
+  private moveAy = 0;
+  private previewOrientation: SplitOrientation | null = null;
+  private readonly onSplit: (orientation: SplitOrientation, splitPx: number) => void;
+  private readonly onLineMove: (orientation: SplitOrientation, splitPx: number) => void;
+  private readonly onPartClick: (partIndex: PartIndex) => void;
 
   private readonly handlePointerMove = (event: PointerEvent) => this.drawHover(event);
   private readonly handlePointerDown = (event: PointerEvent) => this.startLineDrag(event);
@@ -45,9 +55,11 @@ export class CanvasView {
 
   show(image: ImageBitmap, maxWidth: number, maxHeight: number): void {
     this.image = image;
-    this.splitY = null;
+    this.orientation = null;
+    this.linePos = null;
     this.dragging = false;
     this.pressedOnLine = false;
+    this.resetOrientationTracking();
 
     const aspectRatio = image.width / image.height;
     const boxAspectRatio = maxWidth / maxHeight;
@@ -71,23 +83,24 @@ export class CanvasView {
     this.enableInteraction();
   }
 
-  setSplit(splitY: number): void {
-    this.splitY = splitY;
+  setSplit(orientation: SplitOrientation, splitPx: number): void {
+    this.orientation = orientation;
+    this.linePos = splitPx / this.scale;
     this.dragging = false;
     this.pressedOnLine = false;
-    this.clearCanvas();
-    this.drawImageAndLine(splitY, false);
+    this.resetOrientationTracking();
+    this.redrawImage();
+    this.drawLine(this.linePos, false);
     this.canvas.style.cursor = "pointer";
   }
 
-  showPartFeedback(isTop: boolean, text: string): void {
-    if (!this.image || this.splitY === null) return;
+  showPartFeedback(partIndex: PartIndex, text: string): void {
+    if (!this.image || this.linePos === null || this.orientation === null) return;
     this.hidePartHint();
-    const lineY = this.splitY / this.scale;
-    this.positionOver(this.badge, isTop, lineY);
+    this.positionOver(this.badge, partIndex);
     this.chip.textContent = text;
     this.badge.hidden = false;
-    this.feedbackPart = isTop;
+    this.feedbackPart = partIndex;
   }
 
   hideFeedback(): void {
@@ -95,10 +108,9 @@ export class CanvasView {
     this.feedbackPart = null;
   }
 
-  private showPartHint(isTop: boolean): void {
-    if (!this.image || this.splitY === null || this.feedbackPart === isTop) return;
-    const lineY = this.splitY / this.scale;
-    this.positionOver(this.hint, isTop, lineY);
+  private showPartHint(partIndex: PartIndex): void {
+    if (!this.image || this.linePos === null || this.orientation === null || this.feedbackPart === partIndex) return;
+    this.positionOver(this.hint, partIndex);
     this.hintChip.textContent = "Click to copy";
     this.hint.hidden = false;
   }
@@ -107,14 +119,40 @@ export class CanvasView {
     this.hint.hidden = true;
   }
 
-  private positionOver(element: HTMLElement, isTop: boolean, lineY: number): void {
-    if (isTop) {
+  private positionOver(element: HTMLElement, partIndex: PartIndex): void {
+    const width = this.displayWidth();
+    const height = this.displayHeight();
+    this.clearInlineOverlay(element);
+
+    if (this.orientation === "vertical") {
+      const lineX = this.lineDisplayPos();
+      element.style.top = "0";
+      element.style.height = `${height}px`;
+      if (partIndex === 0) {
+        element.style.left = "0";
+        element.style.width = `${lineX}px`;
+      } else {
+        element.style.left = `${lineX}px`;
+        element.style.width = `${width - lineX}px`;
+      }
+      return;
+    }
+
+    const lineY = this.lineDisplayPos();
+    if (partIndex === 0) {
       element.style.top = "0";
       element.style.height = `${lineY}px`;
     } else {
       element.style.top = `${lineY}px`;
-      element.style.height = `${this.displayHeight() - lineY}px`;
+      element.style.height = `${height - lineY}px`;
     }
+  }
+
+  private clearInlineOverlay(element: HTMLElement): void {
+    element.style.top = "";
+    element.style.left = "";
+    element.style.width = "";
+    element.style.height = "";
   }
 
   private enableInteraction(): void {
@@ -136,18 +174,26 @@ export class CanvasView {
   reset(): void {
     this.disableInteraction();
     this.image = null;
-    this.splitY = null;
+    this.orientation = null;
+    this.linePos = null;
     this.dragging = false;
     this.pressedOnLine = false;
     this.feedbackPart = null;
+    this.resetOrientationTracking();
     this.canvas.style.cursor = "";
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     this.hideFeedback();
     this.hidePartHint();
   }
 
-  private pointerY(event: PointerEvent | MouseEvent): number {
-    return event.clientY - this.canvas.getBoundingClientRect().top;
+  private pointer(event: PointerEvent | MouseEvent): { x: number; y: number } {
+    const rect = this.canvas.getBoundingClientRect();
+    return { x: event.clientX - rect.left, y: event.clientY - rect.top };
+  }
+
+  private orientationPos(event: PointerEvent | MouseEvent): number {
+    const { x, y } = this.pointer(event);
+    return (this.orientation === "vertical" ? x : y);
   }
 
   private displayWidth(): number {
@@ -158,53 +204,86 @@ export class CanvasView {
     return this.canvas.height / this.dpr;
   }
 
-  private lineDisplayY(): number {
-    return this.splitY === null ? -1 : this.splitY / this.scale;
+  private lineDisplayPos(): number {
+    return this.linePos === null ? -1 : this.linePos;
   }
 
-  private toSplitY(displayY: number): number {
+  private toSplitPx(displayPos: number): number {
     if (!this.image) return 0;
-    return Math.min(Math.max(Math.round(displayY * this.scale), 1), this.image.height - 1);
+    const dim = this.orientation === "vertical" ? this.image.width : this.image.height;
+    return Math.min(Math.max(Math.round(displayPos * this.scale), 1), dim - 1);
+  }
+
+  private resetOrientationTracking(): void {
+    this.prevMove = null;
+    this.moveAx = 0;
+    this.moveAy = 0;
+    this.previewOrientation = null;
+  }
+
+  private trackOrientation(event: PointerEvent): void {
+    const { x, y } = this.pointer(event);
+    if (this.prevMove) {
+      this.moveAx += Math.abs(x - this.prevMove.x);
+      this.moveAy += Math.abs(y - this.prevMove.y);
+    }
+    this.prevMove = { x, y };
+
+    if (this.moveAx >= this.moveAy + ORIENT_THRESHOLD) {
+      this.previewOrientation = "vertical";
+      this.moveAx = 0;
+      this.moveAy = 0;
+    } else if (this.moveAy >= this.moveAx + ORIENT_THRESHOLD) {
+      this.previewOrientation = "horizontal";
+      this.moveAx = 0;
+      this.moveAy = 0;
+    }
   }
 
   private drawHover(event: PointerEvent): void {
     if (!this.image) return;
-    const y = this.pointerY(event);
 
-    if (this.dragging) {
-      this.hidePartHint();
+    if (this.linePos === null) {
+      this.trackOrientation(event);
       this.redrawImage();
-      this.drawLine(this.toSplitY(y) / this.scale, true);
-      this.canvas.style.cursor = "ns-resize";
-      return;
-    }
-
-    if (this.splitY === null) {
+      if (this.previewOrientation) {
+        const { x, y } = this.pointer(event);
+        this.drawLine(this.previewOrientation === "vertical" ? x : y, false, this.previewOrientation);
+      }
       this.hidePartHint();
-      this.redrawImage();
-      this.drawLine(y);
       this.canvas.style.cursor = "";
       return;
     }
 
-    const lineY = this.lineDisplayY();
-    this.redrawImage();
-    if (Math.abs(y - lineY) <= GRAB_ZONE) {
+    const pos = this.orientationPos(event);
+    const line = this.linePos;
+    const isVertical = this.orientation === "vertical";
+
+    if (this.dragging) {
       this.hidePartHint();
-      this.drawLine(lineY, true);
-      this.canvas.style.cursor = "ns-resize";
+      this.redrawImage();
+      this.drawLine(pos, true);
+      this.canvas.style.cursor = isVertical ? "ew-resize" : "ns-resize";
+      return;
+    }
+
+    this.redrawImage();
+    if (Math.abs(pos - line) <= GRAB_ZONE) {
+      this.hidePartHint();
+      this.drawLine(line, true);
+      this.canvas.style.cursor = isVertical ? "ew-resize" : "ns-resize";
     } else {
-      this.fillPart(y < lineY);
-      this.drawLine(lineY);
-      this.showPartHint(y < lineY);
+      this.fillPart(pos < line ? 0 : 1);
+      this.drawLine(line);
+      this.showPartHint(pos < line ? 0 : 1);
       this.canvas.style.cursor = "pointer";
     }
   }
 
   private startLineDrag(event: PointerEvent): void {
-    if (!this.image || this.splitY === null) return;
-    const y = this.pointerY(event);
-    if (Math.abs(y - this.lineDisplayY()) <= GRAB_ZONE) {
+    if (!this.image || this.linePos === null) return;
+    const pos = this.orientationPos(event);
+    if (Math.abs(pos - this.linePos) <= GRAB_ZONE) {
       this.pressedOnLine = true;
       this.dragging = true;
       this.canvas.setPointerCapture(event.pointerId);
@@ -217,20 +296,23 @@ export class CanvasView {
     if (this.canvas.hasPointerCapture(event.pointerId)) {
       this.canvas.releasePointerCapture(event.pointerId);
     }
-    const splitY = this.toSplitY(this.pointerY(event));
-    this.splitY = splitY;
-    this.onLineMove(splitY);
-    this.clearCanvas();
-    this.drawImageAndLine(splitY, false);
+    const splitPx = this.toSplitPx(this.orientationPos(event));
+    this.linePos = splitPx / this.scale;
+    this.onLineMove(this.orientation as SplitOrientation, splitPx);
+    this.redrawImage();
+    this.drawLine(this.linePos, false);
     this.canvas.style.cursor = "pointer";
   }
 
   private handleCanvasClick(event: MouseEvent): void {
     if (!this.image) return;
-    const y = this.pointerY(event);
 
-    if (this.splitY === null) {
-      this.onSplit(this.toSplitY(y));
+    if (this.linePos === null) {
+      const orientation = this.previewOrientation ?? "horizontal";
+      this.orientation = orientation;
+      this.linePos = this.pointer(event)[orientation === "vertical" ? "x" : "y"];
+      this.onSplit(orientation, this.toSplitPx(this.linePos));
+      this.resetOrientationTracking();
       return;
     }
 
@@ -239,7 +321,7 @@ export class CanvasView {
       return;
     }
 
-    this.onPartClick(y < this.lineDisplayY());
+    this.onPartClick(this.orientationPos(event) < this.linePos ? 0 : 1);
   }
 
   private resolveColor(cssVariable: string): string {
@@ -256,41 +338,55 @@ export class CanvasView {
     this.ctx.clearRect(0, 0, this.displayWidth(), this.displayHeight());
   }
 
-  private drawImageAndLine(splitY: number, focused: boolean): void {
-    this.redrawImage();
-    this.drawLine(splitY / this.scale, focused);
-  }
-
-  private drawLine(displayY: number, focused = false): void {
+  private drawLine(displayPos: number, focused = false, orientation = this.orientation ?? "horizontal"): void {
     const width = this.displayWidth();
+    const height = this.displayHeight();
+    const horizontal = orientation === "horizontal";
+
     this.ctx.save();
     this.ctx.strokeStyle = this.resolveColor("--split-line-shadow");
     this.ctx.beginPath();
-    this.ctx.moveTo(0, displayY + 2);
-    this.ctx.lineTo(width, displayY + 2);
+    if (horizontal) {
+      this.ctx.moveTo(0, displayPos + 2);
+      this.ctx.lineTo(width, displayPos + 2);
+    } else {
+      this.ctx.moveTo(displayPos + 2, 0);
+      this.ctx.lineTo(displayPos + 2, height);
+    }
     this.ctx.stroke();
 
     this.ctx.strokeStyle = focused ? this.resolveColor("--focus") : this.resolveColor("--split-line");
     this.ctx.lineWidth = focused ? 3 : 1;
     this.ctx.beginPath();
-    this.ctx.moveTo(0, displayY);
-    this.ctx.lineTo(width, displayY);
+    if (horizontal) {
+      this.ctx.moveTo(0, displayPos);
+      this.ctx.lineTo(width, displayPos);
+    } else {
+      this.ctx.moveTo(displayPos, 0);
+      this.ctx.lineTo(displayPos, height);
+    }
     this.ctx.stroke();
     this.ctx.restore();
   }
 
-  private fillPart(isTop: boolean): void {
+  private fillPart(partIndex: PartIndex): void {
     const width = this.displayWidth();
     const height = this.displayHeight();
-    const lineY = this.lineDisplayY();
+    const line = this.lineDisplayPos();
 
     this.ctx.save();
     this.ctx.globalAlpha = 0.15;
     this.ctx.fillStyle = "#000000";
-    if (isTop) {
-      this.ctx.fillRect(0, 0, width, lineY);
+    if (this.orientation === "vertical") {
+      if (partIndex === 0) {
+        this.ctx.fillRect(0, 0, line, height);
+      } else {
+        this.ctx.fillRect(line, 0, width - line, height);
+      }
+    } else if (partIndex === 0) {
+      this.ctx.fillRect(0, 0, width, line);
     } else {
-      this.ctx.fillRect(0, lineY, width, height - lineY);
+      this.ctx.fillRect(0, line, width, height - line);
     }
     this.ctx.restore();
   }

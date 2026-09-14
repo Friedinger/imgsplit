@@ -1,31 +1,49 @@
-import type { SplitResult } from "./types";
+import type { SplitOrientation, SplitResult } from "./types";
 
 function cropToCanvas(
   image: ImageBitmap,
+  sx: number,
   sy: number,
-  sHeight: number,
+  sw: number,
+  sh: number,
 ): HTMLCanvasElement {
   const canvas = document.createElement("canvas");
-  canvas.width = image.width;
-  canvas.height = sHeight;
+  canvas.width = sw;
+  canvas.height = sh;
 
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("Could not create 2D context.");
 
   ctx.drawImage(
     image,
-    0, sy, image.width, sHeight,
-    0, 0, image.width, sHeight,
+    sx, sy, sw, sh,
+    0, 0, sw, sh,
   );
 
   return canvas;
 }
 
-export function splitImage(image: ImageBitmap, splitY: number): SplitResult {
-  const y = Math.min(Math.max(splitY, 0), image.height);
+export function splitImage(
+  image: ImageBitmap,
+  orientation: SplitOrientation,
+  pos: number,
+): SplitResult {
+  const p = Math.min(
+    Math.max(pos, 0),
+    orientation === "horizontal" ? image.height : image.width,
+  );
+
+  if (orientation === "horizontal") {
+    return {
+      orientation,
+      first: cropToCanvas(image, 0, 0, image.width, p),
+      second: cropToCanvas(image, 0, p, image.width, image.height - p),
+    };
+  }
 
   return {
-    top: cropToCanvas(image, 0, y),
-    bottom: cropToCanvas(image, y, image.height - y),
+    orientation,
+    first: cropToCanvas(image, 0, 0, p, image.height),
+    second: cropToCanvas(image, p, 0, image.width - p, image.height),
   };
 }

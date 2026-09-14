@@ -1,5 +1,5 @@
 import "./style.css";
-import type { AppState } from "./types";
+import type { AppState, SplitOrientation } from "./types";
 import { setupImageLoader } from "./image-loader";
 import { CanvasView } from "./canvas-view";
 import { splitImage } from "./image-split";
@@ -25,9 +25,9 @@ let state: AppState = { phase: "idle" };
 let feedbackTimer: ReturnType<typeof setTimeout> | undefined;
 
 const view = new CanvasView(canvasEl, copyBadge, copyHint, {
-  onSplit: (splitY) => handleSplit(splitY),
-  onLineMove: (splitY) => handleLineMove(splitY),
-  onPartClick: (isTop) => void handlePartClick(isTop),
+  onSplit: (orientation, splitPx) => handleSplit(orientation, splitPx),
+  onLineMove: (orientation, splitPx) => handleLineMove(orientation, splitPx),
+  onPartClick: (partIndex) => void handlePartClick(partIndex),
 });
 
 function setStatus(text: string): void {
@@ -44,35 +44,35 @@ function showImage(image: ImageBitmap): void {
   const maxHeight = dropZone.clientHeight - 32;
   view.show(image, maxWidth, maxHeight);
 
-  setStatus("Click position to split — drop, paste or select a new image to replace");
+  setStatus("Move & swipe to choose a split direction, then click — drop, paste or select a new image to replace");
 }
 
-function handleSplit(splitY: number): void {
+function handleSplit(orientation: SplitOrientation, splitPx: number): void {
   if (state.phase !== "loaded") return;
 
-  const { top, bottom } = splitImage(state.image, splitY);
-  state = { phase: "split", image: state.image, top, bottom };
+  const { first, second } = splitImage(state.image, orientation, splitPx);
+  state = { phase: "split", image: state.image, orientation, first, second };
 
-  view.setSplit(splitY);
+  view.setSplit(orientation, splitPx);
   setStatus("Click a part to copy it, drag the line to move it, or drop/paste a new image");
 }
 
-function handleLineMove(splitY: number): void {
+function handleLineMove(orientation: SplitOrientation, splitPx: number): void {
   if (state.phase !== "split") return;
 
-  const { top, bottom } = splitImage(state.image, splitY);
-  state = { phase: "split", image: state.image, top, bottom };
+  const { first, second } = splitImage(state.image, orientation, splitPx);
+  state = { phase: "split", image: state.image, orientation, first, second };
 }
 
-async function handlePartClick(isTop: boolean): Promise<void> {
+async function handlePartClick(partIndex: 0 | 1): Promise<void> {
   if (state.phase !== "split") return;
 
-  const part = isTop ? state.top : state.bottom;
+  const part = partIndex === 0 ? state.first : state.second;
   try {
     await copyCanvasToClipboard(part);
-    view.showPartFeedback(isTop, "Copied ✓");
+    view.showPartFeedback(partIndex, "Copied ✓");
   } catch {
-    view.showPartFeedback(isTop, "Copy failed");
+    view.showPartFeedback(partIndex, "Copy failed");
   }
 
   if (feedbackTimer) clearTimeout(feedbackTimer);
