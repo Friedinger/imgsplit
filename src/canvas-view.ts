@@ -19,6 +19,7 @@ export class CanvasView {
   private splitY: number | null = null;
   private dragging = false;
   private pressedOnLine = false;
+  private feedbackPart: boolean | null = null;
   private readonly onSplit: (splitY: number) => void;
   private readonly onLineMove: (splitY: number) => void;
   private readonly onPartClick: (isTop: boolean) => void;
@@ -86,17 +87,19 @@ export class CanvasView {
     this.positionOver(this.badge, isTop, lineY);
     this.chip.textContent = text;
     this.badge.hidden = false;
+    this.feedbackPart = isTop;
   }
 
   hideFeedback(): void {
     this.badge.hidden = true;
+    this.feedbackPart = null;
   }
 
   private showPartHint(isTop: boolean): void {
-    if (!this.image || this.splitY === null) return;
+    if (!this.image || this.splitY === null || this.feedbackPart === isTop) return;
     const lineY = this.splitY / this.scale;
     this.positionOver(this.hint, isTop, lineY);
-    this.hintChip.textContent = "Click to pointer";
+    this.hintChip.textContent = "Click to copy";
     this.hint.hidden = false;
   }
 
@@ -136,6 +139,7 @@ export class CanvasView {
     this.splitY = null;
     this.dragging = false;
     this.pressedOnLine = false;
+    this.feedbackPart = null;
     this.canvas.style.cursor = "";
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     this.hideFeedback();

@@ -19,7 +19,6 @@ const canvasEl = $<HTMLCanvasElement>("canvas");
 const copyBadge = $<HTMLElement>("copyBadge");
 const copyHint = $<HTMLElement>("copyHint");
 const statusText = $<HTMLElement>("statusText");
-const toolbar = $<HTMLElement>("toolbar");
 const resetBtn = $<HTMLButtonElement>("resetBtn");
 
 let state: AppState = { phase: "idle" };
@@ -40,13 +39,12 @@ function showImage(image: ImageBitmap): void {
 
   emptyState.hidden = true;
   canvasWrap.hidden = false;
-  toolbar.hidden = false;
 
   const maxWidth = dropZone.clientWidth - 32;
   const maxHeight = dropZone.clientHeight - 32;
   view.show(image, maxWidth, maxHeight);
 
-  setStatus("Click position to split");
+  setStatus("Click position to split — drop, paste or select a new image to replace");
 }
 
 function handleSplit(splitY: number): void {
@@ -56,7 +54,7 @@ function handleSplit(splitY: number): void {
   state = { phase: "split", image: state.image, top, bottom };
 
   view.setSplit(splitY);
-  setStatus("Click a part to copy it or drag the line");
+  setStatus("Click a part to copy it, drag the line to move it, or drop/paste a new image");
 }
 
 function handleLineMove(splitY: number): void {
@@ -86,7 +84,6 @@ function resetToIdle(): void {
   view.reset();
   emptyState.hidden = false;
   canvasWrap.hidden = true;
-  toolbar.hidden = true;
   setStatus("Paste, drop or select an image");
 }
 
