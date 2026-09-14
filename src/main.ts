@@ -93,6 +93,9 @@ setupImageLoader(fileInput, dropZone, {
 });
 
 resetBtn.addEventListener("click", resetToIdle);
+window.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") resetToIdle();
+});
 
 window.addEventListener("resize", () => {
   if (state.phase === "loaded") {
