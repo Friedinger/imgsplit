@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ImgPart | Split image horizontally</title>
+    <meta
+      name="description"
+      content="Split an image horizontally into two parts with a click. Runs entirely in the browser, no server." />
+    <link rel="icon" href="data:," />
+  </head>
+  <body>
+    <div id="app">
+      <header class="app-header">
+        <h1>ImgPart</h1>
+        <p class="app-subtitle" id="statusText">
+          Paste, drop or select an image
+        </p>
+      </header>
+
+      <main id="dropZone" class="drop-zone">
+        <div id="emptyState" class="empty-state">
+          <p>Drop an image here or paste it (Ctrl+V)</p>
+          <label class="file-button">
+            Choose file
+            <input type="file" id="fileInput" accept="image/*" hidden />
+          </label>
+        </div>
+
+        <canvas id="canvas" class="canvas" hidden></canvas>
+      </main>
+
+      <footer class="toolbar" id="toolbar" hidden>
+        <button type="button" id="copyTopBtn" class="btn" hidden>
+          Copy top part
+        </button>
+        <button type="button" id="copyBottomBtn" class="btn" hidden>
+          Copy bottom part
+        </button>
+        <button type="button" id="resetBtn" class="btn btn--ghost">
+          Load new image
+        </button>
+      </footer>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

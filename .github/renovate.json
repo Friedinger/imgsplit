@@ -1,11 +1,4 @@
 {
-    "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-    "extends": [
-        "github>Friedinger/Configs//renovate/recommended.json"
-    ],
-    "pip_requirements": {
-        "managerFilePatterns": [
-            "/(^|/)requirements(-.*)?.txt$/"
-        ]
-    }
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["github>Friedinger/configs//renovate/recommended.json"]
 }

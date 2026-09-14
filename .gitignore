@@ -1,33 +1,24 @@
-# Byte-compiled / optimized / DLL files
-__pycache__/
-*.py[cod]
-*$py.class
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
 
-# Virtual environment
-venv/
-ENV/
-env/
-.venv/
+node_modules
+dist
+dist-ssr
+*.local
 
-# Distribution / packaging
-build/
-dist/
-*.egg-info/
-.eggs/
-
-# Unit test / coverage reports
-.coverage
-.tox/
-.nox/
-.pytest_cache/
-
-# Jupyter Notebook
-.ipynb_checkpoints
-
-# IDE-specific files
-.vscode/
-.idea/
-
-# OS-specific files
-Thumbs.db
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
 .DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

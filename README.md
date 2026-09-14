@@ -1,21 +1,20 @@
 # ImgPart
 
-Simple python tool that splits images by a horizontal line into two sub images.
+Splits an image horizontally into two parts with a click, directly in the
+browser, no server. Paste an image (Ctrl+V), drop it via drag & drop, or
+select it via the file dialog, click the split position, and copy both
+parts individually to the clipboard.
 
-Images are in and outputted by clipboard for fast usage.
+## Development
 
-**Required modules:**
+```bash
+npm install
+npm run dev
+```
 
--   Pillow: `pip install pillow`
--   PyWin32: `pip install pywin32`
--   Tkinter: `pip install tk`
--   CustomTkinter: `pip install customtkinter`
+## Build
 
-**Usage:**
-
--   Open `ImgPart.pyw` to run it
-
-**Credit and license:**
-
--   © 2025 [Friedinger](https://friedinger.org/)
--   License: [MIT License](https://github.com/Friedinger/ImgPart/blob/main/LICENSE)
+```bash
+npm run build
+npm run preview
+```
