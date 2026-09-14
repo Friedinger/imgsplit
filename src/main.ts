@@ -14,17 +14,21 @@ const $ = <T extends HTMLElement>(id: string): T => {
 const dropZone = $<HTMLElement>("dropZone");
 const emptyState = $<HTMLElement>("emptyState");
 const fileInput = $<HTMLInputElement>("fileInput");
+const canvasWrap = $<HTMLElement>("canvasWrap");
 const canvasEl = $<HTMLCanvasElement>("canvas");
+const copyBadge = $<HTMLElement>("copyBadge");
+const copyHint = $<HTMLElement>("copyHint");
 const statusText = $<HTMLElement>("statusText");
 const toolbar = $<HTMLElement>("toolbar");
-const copyTopBtn = $<HTMLButtonElement>("copyTopBtn");
-const copyBottomBtn = $<HTMLButtonElement>("copyBottomBtn");
 const resetBtn = $<HTMLButtonElement>("resetBtn");
 
 let state: AppState = { phase: "idle" };
+let feedbackTimer: ReturnType<typeof setTimeout> | undefined;
 
-const view = new CanvasView(canvasEl, {
+const view = new CanvasView(canvasEl, copyBadge, copyHint, {
   onSplit: (splitY) => handleSplit(splitY),
+  onLineMove: (splitY) => handleLineMove(splitY),
+  onPartClick: (isTop) => void handlePartClick(isTop),
 });
 
 function setStatus(text: string): void {
@@ -35,10 +39,8 @@ function showImage(image: ImageBitmap): void {
   state = { phase: "loaded", image };
 
   emptyState.hidden = true;
-  canvasEl.hidden = false;
+  canvasWrap.hidden = false;
   toolbar.hidden = false;
-  copyTopBtn.hidden = true;
-  copyBottomBtn.hidden = true;
 
   const maxWidth = dropZone.clientWidth - 32;
   const maxHeight = dropZone.clientHeight - 32;
@@ -53,31 +55,37 @@ function handleSplit(splitY: number): void {
   const { top, bottom } = splitImage(state.image, splitY);
   state = { phase: "split", image: state.image, top, bottom };
 
-  view.disableInteraction();
-  copyTopBtn.hidden = false;
-  copyBottomBtn.hidden = false;
-  setStatus("Copy parts to clipboard");
+  view.setSplit(splitY);
+  setStatus("Click a part to copy it or drag the line");
 }
 
-async function handleCopy(canvas: HTMLCanvasElement, button: HTMLButtonElement): Promise<void> {
-  const originalLabel = button.textContent;
+function handleLineMove(splitY: number): void {
+  if (state.phase !== "split") return;
+
+  const { top, bottom } = splitImage(state.image, splitY);
+  state = { phase: "split", image: state.image, top, bottom };
+}
+
+async function handlePartClick(isTop: boolean): Promise<void> {
+  if (state.phase !== "split") return;
+
+  const part = isTop ? state.top : state.bottom;
   try {
-    await copyCanvasToClipboard(canvas);
-    button.textContent = "Copied ✓";
+    await copyCanvasToClipboard(part);
+    view.showPartFeedback(isTop, "Copied ✓");
   } catch {
-    button.textContent = "Copy failed";
-  } finally {
-    setTimeout(() => {
-      button.textContent = originalLabel;
-    }, 1500);
+    view.showPartFeedback(isTop, "Copy failed");
   }
+
+  if (feedbackTimer) clearTimeout(feedbackTimer);
+  feedbackTimer = setTimeout(() => view.hideFeedback(), 1500);
 }
 
 function resetToIdle(): void {
   state = { phase: "idle" };
   view.reset();
   emptyState.hidden = false;
-  canvasEl.hidden = true;
+  canvasWrap.hidden = true;
   toolbar.hidden = true;
   setStatus("Paste, drop or select an image");
 }
@@ -85,14 +93,6 @@ function resetToIdle(): void {
 setupImageLoader(fileInput, dropZone, {
   onImage: (image) => showImage(image),
   onNoImage: () => setStatus("No image found — please try again"),
-});
-
-copyTopBtn.addEventListener("click", () => {
-  if (state.phase === "split") void handleCopy(state.top, copyTopBtn);
-});
-
-copyBottomBtn.addEventListener("click", () => {
-  if (state.phase === "split") void handleCopy(state.bottom, copyBottomBtn);
 });
 
 resetBtn.addEventListener("click", resetToIdle);

@@ -30,16 +30,18 @@
           </p>
         </div>
 
-        <canvas id="canvas" class="canvas" hidden></canvas>
+        <div class="canvas-wrap" id="canvasWrap" hidden>
+          <canvas id="canvas" class="canvas"></canvas>
+          <div id="copyBadge" class="copy-badge" hidden>
+            <span class="copy-badge__chip"></span>
+          </div>
+          <div id="copyHint" class="copy-hint" hidden>
+            <span class="copy-hint__chip">Click to copy</span>
+          </div>
+        </div>
       </main>
 
       <footer class="toolbar" id="toolbar" hidden>
-        <button type="button" id="copyTopBtn" class="btn" hidden>
-          Copy top part
-        </button>
-        <button type="button" id="copyBottomBtn" class="btn" hidden>
-          Copy bottom part
-        </button>
         <button type="button" id="resetBtn" class="btn btn--ghost">
           Load new image
         </button>
