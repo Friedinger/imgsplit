@@ -66,19 +66,19 @@ body {
 }
 
 .app-header {
-  padding: var(--space-4) var(--space-4) var(--space-3);
+  height: 4rem;
+  padding: 0 var(--space-4);
   border-bottom: 1px solid var(--border);
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: var(--space-3);
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
 }
 
 .app-header h1 {
   margin: 0;
-  font-size: 1.05rem;
+  font-size: 1.5rem;
   font-weight: 600;
-  letter-spacing: -0.01em;
 }
 
 .app-subtitle {
@@ -86,6 +86,7 @@ body {
   color: var(--muted);
   font-size: 0.9rem;
   font-family: var(--font-mono);
+  transform: translateY(0.2rem);
 }
 
 .drop-zone {
@@ -144,12 +145,12 @@ body {
 .file-button {
   appearance: none;
   border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
   background: var(--surface);
   color: var(--fg);
   font: inherit;
   font-size: 0.9rem;
   padding: var(--space-2) var(--space-3);
-  border-radius: var(--radius);
   cursor: pointer;
   transition: background-color 120ms ease, border-color 120ms ease;
 }
