@@ -1,5 +1,7 @@
 export type SplitOrientation = "horizontal" | "vertical";
 
+export type PartIndex = 0 | 1;
+
 export type AppState =
   | { phase: "idle" }
   | { phase: "loaded"; image: ImageBitmap }

@@ -1,9 +1,14 @@
 import "./style.css";
-import type { AppState, SplitOrientation } from "./types";
 import { setupImageLoader } from "./image-loader";
 import { CanvasView } from "./canvas-view";
 import { splitImage } from "./image-split";
 import { copyCanvasToClipboard } from "./clipboard";
+import type { AppState, PartIndex, SplitOrientation } from "./types";
+
+const CHOOSE_SPLIT_STATUS =
+  "Move & swipe to choose a split direction, then click — drop, paste or select a new image to replace";
+const SPLIT_STATUS =
+  "Click a part to copy it, drag the line to move it, or drop/paste a new image";
 
 const $ = <T extends HTMLElement>(id: string): T => {
   const el = document.getElementById(id);
@@ -25,10 +30,10 @@ let state: AppState = { phase: "idle" };
 let feedbackTimer: ReturnType<typeof setTimeout> | undefined;
 
 const view = new CanvasView(canvasEl, copyBadge, copyHint, {
-  onSplit: (orientation, splitPx) => handleSplit(orientation, splitPx),
-  onLineMove: (orientation, splitPx) => handleLineMove(orientation, splitPx),
-  onClearSplit: () => handleClearSplit(),
-  onPartClick: (partIndex) => void handlePartClick(partIndex),
+  onSplit: handleSplit,
+  onLineMove: handleLineMove,
+  onClearSplit: handleClearSplit,
+  onPartClick: handlePartClick,
 });
 
 function setStatus(text: string): void {
@@ -45,28 +50,28 @@ function showImage(image: ImageBitmap): void {
   const maxHeight = dropZone.clientHeight - 32;
   view.show(image, maxWidth, maxHeight);
 
-  setStatus(
-    "Move & swipe to choose a split direction, then click — drop, paste or select a new image to replace",
-  );
+  setStatus(CHOOSE_SPLIT_STATUS);
+}
+
+function applySplit(
+  image: ImageBitmap,
+  orientation: SplitOrientation,
+  splitPx: number,
+): void {
+  const parts = splitImage(image, orientation, splitPx);
+  state = { phase: "split", image, ...parts };
 }
 
 function handleSplit(orientation: SplitOrientation, splitPx: number): void {
   if (state.phase !== "loaded") return;
-
-  const { first, second } = splitImage(state.image, orientation, splitPx);
-  state = { phase: "split", image: state.image, orientation, first, second };
-
+  applySplit(state.image, orientation, splitPx);
   view.setSplit(orientation, splitPx);
-  setStatus(
-    "Click a part to copy it, drag the line to move it, or drop/paste a new image",
-  );
+  setStatus(SPLIT_STATUS);
 }
 
 function handleLineMove(orientation: SplitOrientation, splitPx: number): void {
   if (state.phase !== "split") return;
-
-  const { first, second } = splitImage(state.image, orientation, splitPx);
-  state = { phase: "split", image: state.image, orientation, first, second };
+  applySplit(state.image, orientation, splitPx);
 }
 
 function handleClearSplit(): void {
@@ -74,12 +79,10 @@ function handleClearSplit(): void {
 
   state = { phase: "loaded", image: state.image };
   view.backToLoaded();
-  setStatus(
-    "Move & swipe to choose a split direction, then click — drop, paste or select a new image to replace",
-  );
+  setStatus(CHOOSE_SPLIT_STATUS);
 }
 
-async function handlePartClick(partIndex: 0 | 1): Promise<void> {
+async function handlePartClick(partIndex: PartIndex): Promise<void> {
   if (state.phase !== "split") return;
 
   const part = partIndex === 0 ? state.first : state.second;
