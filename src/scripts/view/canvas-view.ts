@@ -1,7 +1,7 @@
-import { CanvasRenderer } from "./canvas-renderer";
-import { positionOverlay } from "./split-overlay";
-import { CanvasInteraction } from "./canvas-interaction";
-import type { PartIndex, SplitOrientation } from "./types";
+import { CanvasRenderer } from "@/scripts/view/canvas-renderer";
+import { positionOverlay } from "@/scripts/view/split-overlay";
+import { CanvasInteraction } from "@/scripts/view/canvas-interaction";
+import type { PartIndex, SplitOrientation } from "@/scripts/types";
 
 export interface CanvasViewOptions {
   onSplit: (orientation: SplitOrientation, splitPx: number) => void;

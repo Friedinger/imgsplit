@@ -1,9 +1,9 @@
-import "./style.css";
-import { setupImageLoader } from "./image-loader";
-import { CanvasView } from "./canvas-view";
-import { splitImage } from "./image-split";
-import { copyCanvasToClipboard } from "./clipboard";
-import type { AppState, PartIndex, SplitOrientation } from "./types";
+import "@/styles/style.css";
+import { setupImageLoader } from "@/scripts/image/image-loader";
+import { CanvasView } from "@/scripts/view/canvas-view";
+import { splitImage } from "@/scripts/image/image-split";
+import { copyCanvasToClipboard } from "@/scripts/image/clipboard";
+import type { AppState, PartIndex, SplitOrientation } from "@/scripts/types";
 
 const CHOOSE_SPLIT_STATUS =
   "Move & swipe to choose a split direction, then click — drop, paste or select a new image to replace";

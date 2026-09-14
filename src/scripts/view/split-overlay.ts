@@ -1,4 +1,4 @@
-import type { PartIndex, SplitOrientation } from "./types";
+import type { PartIndex, SplitOrientation } from "@/scripts/types";
 
 export function positionOverlay(
   element: HTMLElement,

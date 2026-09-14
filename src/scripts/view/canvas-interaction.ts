@@ -1,6 +1,6 @@
-import { SwipeDirection } from "./swipe-direction";
-import type { PartIndex } from "./types";
-import type { CanvasView, CanvasViewOptions } from "./canvas-view";
+import { SwipeDirection } from "@/scripts/view/swipe-direction";
+import type { PartIndex } from "@/scripts/types";
+import type { CanvasView, CanvasViewOptions } from "@/scripts/view/canvas-view";
 
 const GRAB_ZONE = 8;
 const DRAG_CLICK_THRESHOLD = 4;

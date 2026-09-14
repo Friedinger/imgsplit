@@ -1,4 +1,4 @@
-import type { SplitOrientation } from "./types";
+import type { SplitOrientation } from "@/scripts/types";
 
 const DIRECTION_THRESHOLD = 30;
 

@@ -1,4 +1,4 @@
-import type { SplitOrientation, SplitResult } from "./types";
+import type { SplitOrientation, SplitResult } from "@/scripts/types";
 
 function cropToCanvas(
   image: ImageBitmap,
