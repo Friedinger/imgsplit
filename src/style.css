@@ -186,7 +186,9 @@ kbd {
   font-size: 0.9rem;
   padding: var(--space-2) var(--space-3);
   cursor: pointer;
-  transition: background-color 120ms ease, border-color 120ms ease;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease;
 }
 
 .btn:hover,

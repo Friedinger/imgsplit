@@ -14,11 +14,7 @@ function cropToCanvas(
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("Could not create 2D context.");
 
-  ctx.drawImage(
-    image,
-    sx, sy, sw, sh,
-    0, 0, sw, sh,
-  );
+  ctx.drawImage(image, sx, sy, sw, sh, 0, 0, sw, sh);
 
   return canvas;
 }

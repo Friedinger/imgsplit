@@ -45,7 +45,9 @@ function showImage(image: ImageBitmap): void {
   const maxHeight = dropZone.clientHeight - 32;
   view.show(image, maxWidth, maxHeight);
 
-  setStatus("Move & swipe to choose a split direction, then click — drop, paste or select a new image to replace");
+  setStatus(
+    "Move & swipe to choose a split direction, then click — drop, paste or select a new image to replace",
+  );
 }
 
 function handleSplit(orientation: SplitOrientation, splitPx: number): void {
@@ -55,7 +57,9 @@ function handleSplit(orientation: SplitOrientation, splitPx: number): void {
   state = { phase: "split", image: state.image, orientation, first, second };
 
   view.setSplit(orientation, splitPx);
-  setStatus("Click a part to copy it, drag the line to move it, or drop/paste a new image");
+  setStatus(
+    "Click a part to copy it, drag the line to move it, or drop/paste a new image",
+  );
 }
 
 function handleLineMove(orientation: SplitOrientation, splitPx: number): void {
@@ -70,7 +74,9 @@ function handleClearSplit(): void {
 
   state = { phase: "loaded", image: state.image };
   view.backToLoaded();
-  setStatus("Move & swipe to choose a split direction, then click — drop, paste or select a new image to replace");
+  setStatus(
+    "Move & swipe to choose a split direction, then click — drop, paste or select a new image to replace",
+  );
 }
 
 async function handlePartClick(partIndex: 0 | 1): Promise<void> {

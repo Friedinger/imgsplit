@@ -34,17 +34,32 @@ export class CanvasView {
   private moveAx = 0;
   private moveAy = 0;
   private previewOrientation: SplitOrientation | null = null;
-  private readonly onSplit: (orientation: SplitOrientation, splitPx: number) => void;
-  private readonly onLineMove: (orientation: SplitOrientation, splitPx: number) => void;
+  private readonly onSplit: (
+    orientation: SplitOrientation,
+    splitPx: number,
+  ) => void;
+  private readonly onLineMove: (
+    orientation: SplitOrientation,
+    splitPx: number,
+  ) => void;
   private readonly onClearSplit: () => void;
   private readonly onPartClick: (partIndex: PartIndex) => void;
 
-  private readonly handlePointerMove = (event: PointerEvent) => this.drawHover(event);
-  private readonly handlePointerDown = (event: PointerEvent) => this.startLineDrag(event);
-  private readonly handlePointerUp = (event: PointerEvent) => this.finishLineDrag(event);
-  private readonly handleClick = (event: MouseEvent) => this.handleCanvasClick(event);
+  private readonly handlePointerMove = (event: PointerEvent) =>
+    this.drawHover(event);
+  private readonly handlePointerDown = (event: PointerEvent) =>
+    this.startLineDrag(event);
+  private readonly handlePointerUp = (event: PointerEvent) =>
+    this.finishLineDrag(event);
+  private readonly handleClick = (event: MouseEvent) =>
+    this.handleCanvasClick(event);
 
-  constructor(canvas: HTMLCanvasElement, badge: HTMLElement, hint: HTMLElement, options: CanvasViewOptions) {
+  constructor(
+    canvas: HTMLCanvasElement,
+    badge: HTMLElement,
+    hint: HTMLElement,
+    options: CanvasViewOptions,
+  ) {
     this.canvas = canvas;
     const ctx = canvas.getContext("2d");
     if (!ctx) throw new Error("Could not create 2D context.");
@@ -103,7 +118,8 @@ export class CanvasView {
   }
 
   showPartFeedback(partIndex: PartIndex, text: string): void {
-    if (!this.image || this.linePos === null || this.orientation === null) return;
+    if (!this.image || this.linePos === null || this.orientation === null)
+      return;
     this.hidePartHint();
     this.positionOver(this.badge, partIndex);
     this.chip.textContent = text;
@@ -117,7 +133,13 @@ export class CanvasView {
   }
 
   private showPartHint(partIndex: PartIndex): void {
-    if (!this.image || this.linePos === null || this.orientation === null || this.feedbackPart === partIndex) return;
+    if (
+      !this.image ||
+      this.linePos === null ||
+      this.orientation === null ||
+      this.feedbackPart === partIndex
+    )
+      return;
     this.positionOver(this.hint, partIndex);
     this.hintChip.textContent = "Click to copy";
     this.hint.hidden = false;
@@ -202,7 +224,7 @@ export class CanvasView {
 
   private orientationPos(event: PointerEvent | MouseEvent): number {
     const { x, y } = this.pointer(event);
-    return (this.orientation === "vertical" ? x : y);
+    return this.orientation === "vertical" ? x : y;
   }
 
   private displayWidth(): number {
@@ -219,7 +241,8 @@ export class CanvasView {
 
   private toSplitPx(displayPos: number): number {
     if (!this.image) return 0;
-    const dim = this.orientation === "vertical" ? this.image.width : this.image.height;
+    const dim =
+      this.orientation === "vertical" ? this.image.width : this.image.height;
     return Math.min(Math.max(Math.round(displayPos * this.scale), 1), dim - 1);
   }
 
@@ -257,7 +280,11 @@ export class CanvasView {
       this.redrawImage();
       if (this.previewOrientation) {
         const { x, y } = this.pointer(event);
-        this.drawLine(this.previewOrientation === "vertical" ? x : y, false, this.previewOrientation);
+        this.drawLine(
+          this.previewOrientation === "vertical" ? x : y,
+          false,
+          this.previewOrientation,
+        );
       }
       this.hidePartHint();
       this.canvas.style.cursor = "";
@@ -325,7 +352,8 @@ export class CanvasView {
     if (this.linePos === null) {
       const orientation = this.previewOrientation ?? "horizontal";
       this.orientation = orientation;
-      this.linePos = this.pointer(event)[orientation === "vertical" ? "x" : "y"];
+      this.linePos =
+        this.pointer(event)[orientation === "vertical" ? "x" : "y"];
       this.onSplit(orientation, this.toSplitPx(this.linePos));
       this.resetOrientationTracking();
       return;
@@ -358,20 +386,33 @@ export class CanvasView {
   }
 
   private resolveColor(cssVariable: string): string {
-    return getComputedStyle(this.canvas).getPropertyValue(cssVariable).trim() || "#000000";
+    return (
+      getComputedStyle(this.canvas).getPropertyValue(cssVariable).trim() ||
+      "#000000"
+    );
   }
 
   private redrawImage(): void {
     if (!this.image) return;
     this.clearCanvas();
-    this.ctx.drawImage(this.image, 0, 0, this.displayWidth(), this.displayHeight());
+    this.ctx.drawImage(
+      this.image,
+      0,
+      0,
+      this.displayWidth(),
+      this.displayHeight(),
+    );
   }
 
   private clearCanvas(): void {
     this.ctx.clearRect(0, 0, this.displayWidth(), this.displayHeight());
   }
 
-  private drawLine(displayPos: number, focused = false, orientation = this.orientation ?? "horizontal"): void {
+  private drawLine(
+    displayPos: number,
+    focused = false,
+    orientation = this.orientation ?? "horizontal",
+  ): void {
     const width = this.displayWidth();
     const height = this.displayHeight();
     const horizontal = orientation === "horizontal";
@@ -388,7 +429,9 @@ export class CanvasView {
     }
     this.ctx.stroke();
 
-    this.ctx.strokeStyle = focused ? this.resolveColor("--focus") : this.resolveColor("--split-line");
+    this.ctx.strokeStyle = focused
+      ? this.resolveColor("--focus")
+      : this.resolveColor("--split-line");
     this.ctx.lineWidth = focused ? 3 : 1;
     this.ctx.beginPath();
     if (horizontal) {
