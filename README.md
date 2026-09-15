@@ -1,9 +1,9 @@
-# ImgPart
+# ImgSplit
 
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-GitHub%20Pages-blue?style=flat-square)](https://friedinger.github.io/ImgPart/)
-[![Build Status](https://img.shields.io/github/actions/workflow/status/Friedinger/ImgPart/build-deploy.yml?style=flat-square&label=Build%20and%20Deploy&color=lime)](https://github.com/Friedinger/ImgPart/actions/workflows/build-deploy.yml)
-[![Last Commit](https://img.shields.io/github/last-commit/Friedinger/ImgPart?style=flat-square&color=orange)](https://github.com/Friedinger/ImgPart/commits/main)
-[![License: MIT](https://img.shields.io/github/license/Friedinger/ImgPart?style=flat-square&color=yellow)](LICENSE)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-GitHub%20Pages-blue?style=flat-square)](https://friedinger.github.io/imgsplit/)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/Friedinger/imgsplit/build-deploy.yml?style=flat-square&label=Build%20and%20Deploy&color=lime)](https://github.com/Friedinger/imgsplit/actions/workflows/build-deploy.yml)
+[![Last Commit](https://img.shields.io/github/last-commit/Friedinger/imgsplit?style=flat-square&color=orange)](https://github.com/Friedinger/imgsplit/commits/main)
+[![License: MIT](https://img.shields.io/github/license/Friedinger/imgsplit?style=flat-square&color=yellow)](LICENSE)
 
 A simple tool that splits an image into two parts in the browser. No server,
 no uploads. Paste an image (Ctrl+V), drop it via drag & drop, or select it via

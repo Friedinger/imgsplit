@@ -1,7 +1,7 @@
 import { defineConfig } from "vite";
 
 export default defineConfig({
-  base: "/ImgPart/",
+  base: "/imgsplit/",
   resolve: {
     alias: {
       "@": "/src",
