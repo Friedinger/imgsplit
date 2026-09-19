@@ -1,0 +1,16 @@
+name: Sync webhook
+
+on:
+  schedule:
+    - cron: "0 3 * * 0"
+  push:
+    branches: [main]
+    paths: [.github/workflows/sync-webhook.yml]
+  workflow_dispatch:
+
+jobs:
+  run:
+    uses: Friedinger/configs/.github/workflows/action-sync-webhook.yml@bf1447e9de2d0d348a1ff7de85549c8da02ec814 # v1.2.4
+    secrets:
+      WEBHOOK_TOKEN: ${{ secrets.WEBHOOK_TOKEN }}
+      WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
